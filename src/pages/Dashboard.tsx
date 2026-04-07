@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Briefcase, Users, CalendarCheck, CheckCircle2, TrendingUp, Target, Pencil, Check, X, IndianRupee } from "lucide-react";
+import { Briefcase, Users, CalendarCheck, CheckCircle2, TrendingUp, Target, Pencil, Check, X, IndianRupee, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart, ReferenceLine } from "recharts";
 import { chartData, candidates, jobs, interviews } from "@/data/mockData";
 
-const CLOSED_POSITION_VALUE = 50000; // ₹ earned per closed position
+const CLOSED_POSITION_VALUE = 50000;
 
 const stats = [
   { label: "Active Jobs", value: jobs.filter(j => j.status === 'Open').length, icon: Briefcase, gradient: "from-info/20 to-info/5", iconBg: "bg-info/15", iconColor: "text-info", border: "border-info/20" },
@@ -40,6 +40,26 @@ function formatCurrency(amount: number) {
   return `₹${amount}`;
 }
 
+function downloadRecruiterCSV() {
+  const headers = ["Recruiter", "Submissions", "Interviews", "Hires", "Target", "Achievement %"];
+  const rows = chartData.recruiterPerformance.map(r => [
+    r.name,
+    r.submissions,
+    r.interviews,
+    r.hires,
+    r.target,
+    ((r.hires / r.target) * 100).toFixed(1) + "%",
+  ]);
+  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "recruiter-performance.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function Dashboard() {
   const [monthlyTarget, setMonthlyTarget] = useState(() => {
     const saved = localStorage.getItem('monthlyTarget');
@@ -57,22 +77,9 @@ export default function Dashboard() {
     localStorage.setItem('monthlyTarget', String(monthlyTarget));
   }, [monthlyTarget]);
 
-  const handleEdit = () => {
-    setEditValue(String(monthlyTarget));
-    setIsEditing(true);
-  };
-
-  const handleSave = () => {
-    const val = Number(editValue);
-    if (val > 0) {
-      setMonthlyTarget(val);
-    }
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-  };
+  const handleEdit = () => { setEditValue(String(monthlyTarget)); setIsEditing(true); };
+  const handleSave = () => { const val = Number(editValue); if (val > 0) setMonthlyTarget(val); setIsEditing(false); };
+  const handleCancel = () => setIsEditing(false);
 
   return (
     <div className="space-y-6 max-w-7xl">
@@ -82,7 +89,6 @@ export default function Dashboard() {
           <p className="text-muted-foreground text-sm mt-1">Welcome back! Here's your recruitment overview.</p>
         </div>
 
-        {/* Monthly Target Card */}
         <div className="relative overflow-hidden rounded-xl border border-accent/30 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent p-4 min-w-[220px] shadow-md">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
@@ -97,29 +103,14 @@ export default function Dashboard() {
               </Button>
             )}
           </div>
-
           {isEditing ? (
             <div className="flex items-center gap-1.5 mt-1">
               <div className="relative flex-1">
                 <IndianRupee className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  type="number"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  className="h-8 pl-7 text-sm"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSave();
-                    if (e.key === 'Escape') handleCancel();
-                  }}
-                />
+                <Input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-8 pl-7 text-sm" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel(); }} />
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-success hover:text-success" onClick={handleSave}>
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={handleCancel}>
-                <X className="h-4 w-4" />
-              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-success hover:text-success" onClick={handleSave}><Check className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={handleCancel}><X className="h-4 w-4" /></Button>
             </div>
           ) : (
             <>
@@ -134,27 +125,19 @@ export default function Dashboard() {
               </p>
             </>
           )}
-          <div className="absolute -right-3 -bottom-3 opacity-[0.05]">
-            <Target className="h-16 w-16" />
-          </div>
+          <div className="absolute -right-3 -bottom-3 opacity-[0.05]"><Target className="h-16 w-16" /></div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className={`relative overflow-hidden rounded-xl border ${s.border} bg-gradient-to-br ${s.gradient} p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5`}
-            style={{ animationDelay: `${i * 80}ms` }}
-          >
+          <div key={s.label} className={`relative overflow-hidden rounded-xl border ${s.border} bg-gradient-to-br ${s.gradient} p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5`} style={{ animationDelay: `${i * 80}ms` }}>
             <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${s.iconBg} mb-3`}>
               <s.icon className={`h-5 w-5 ${s.iconColor}`} />
             </div>
             <p className="text-2xl font-bold tracking-tight">{s.value}</p>
             <p className="text-muted-foreground text-xs mt-1 font-medium">{s.label}</p>
-            <div className="absolute -right-3 -bottom-3 opacity-[0.07]">
-              <s.icon className="h-20 w-20" />
-            </div>
+            <div className="absolute -right-3 -bottom-3 opacity-[0.07]"><s.icon className="h-20 w-20" /></div>
           </div>
         ))}
       </div>
@@ -167,23 +150,8 @@ export default function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie
-                  data={chartData.candidatesPerStage}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={105}
-                  paddingAngle={4}
-                  dataKey="count"
-                  nameKey="stage"
-                  animationBegin={0}
-                  animationDuration={1200}
-                  animationEasing="ease-out"
-                  cornerRadius={4}
-                >
-                  {chartData.candidatesPerStage.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="none" />
-                  ))}
+                <Pie data={chartData.candidatesPerStage} cx="50%" cy="50%" innerRadius={65} outerRadius={105} paddingAngle={4} dataKey="count" nameKey="stage" animationBegin={0} animationDuration={1200} animationEasing="ease-out" cornerRadius={4}>
+                  {chartData.candidatesPerStage.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} stroke="none" />))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
               </PieChart>
@@ -191,8 +159,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap gap-3 justify-center mt-2">
               {chartData.candidatesPerStage.map((item, i) => (
                 <div key={item.stage} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }} />
-                  {item.stage}
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i] }} />{item.stage}
                 </div>
               ))}
             </div>
@@ -216,18 +183,7 @@ export default function Dashboard() {
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="closures"
-                  stroke="hsl(var(--accent))"
-                  strokeWidth={2.5}
-                  fill="url(#closureGrad)"
-                  dot={{ fill: 'hsl(var(--accent))', r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
-                  activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
-                  animationBegin={0}
-                  animationDuration={1500}
-                  animationEasing="ease-out"
-                />
+                <Area type="monotone" dataKey="closures" stroke="hsl(var(--accent))" strokeWidth={2.5} fill="url(#closureGrad)" dot={{ fill: 'hsl(var(--accent))', r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }} activeDot={{ r: 6, strokeWidth: 2, stroke: 'hsl(var(--card))' }} animationBegin={0} animationDuration={1500} animationEasing="ease-out" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -235,7 +191,12 @@ export default function Dashboard() {
 
         <Card className="lg:col-span-2 overflow-hidden border-0 shadow-md bg-gradient-to-br from-card to-card/80">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Recruiter Performance</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold">Recruiter Performance</CardTitle>
+              <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={downloadRecruiterCSV}>
+                <Download className="h-3.5 w-3.5" /> Download CSV
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -247,15 +208,36 @@ export default function Dashboard() {
                 <Bar dataKey="submissions" fill="hsl(var(--info))" radius={[6, 6, 0, 0]} animationBegin={0} animationDuration={1200} />
                 <Bar dataKey="interviews" fill="hsl(var(--warning))" radius={[6, 6, 0, 0]} animationBegin={200} animationDuration={1200} />
                 <Bar dataKey="hires" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} animationBegin={400} animationDuration={1200} />
+                <Bar dataKey="target" fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} animationBegin={600} animationDuration={1200} />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex gap-6 justify-center mt-2">
-              {[{ label: 'Submissions', color: 'hsl(var(--info))' }, { label: 'Interviews', color: 'hsl(var(--warning))' }, { label: 'Hires', color: 'hsl(var(--accent))' }].map(l => (
+              {[
+                { label: 'Submissions', color: 'hsl(var(--info))' },
+                { label: 'Interviews', color: 'hsl(var(--warning))' },
+                { label: 'Hires', color: 'hsl(var(--accent))' },
+                { label: 'Target', color: 'hsl(var(--destructive))' },
+              ].map(l => (
                 <div key={l.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: l.color }} />
-                  {l.label}
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: l.color }} />{l.label}
                 </div>
               ))}
+            </div>
+            {/* Recruiter target summary cards */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {chartData.recruiterPerformance.map(r => {
+                const pct = Math.round((r.hires / r.target) * 100);
+                return (
+                  <div key={r.name} className="rounded-lg border bg-muted/30 p-3">
+                    <p className="text-sm font-semibold truncate">{r.name}</p>
+                    <div className="flex items-center justify-between mt-1.5 text-xs text-muted-foreground">
+                      <span>{r.hires}/{r.target} hires</span>
+                      <span className={pct >= 100 ? "text-success font-semibold" : pct >= 70 ? "text-warning font-semibold" : "text-destructive font-semibold"}>{pct}%</span>
+                    </div>
+                    <Progress value={Math.min(100, pct)} className="h-1.5 mt-1.5" />
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

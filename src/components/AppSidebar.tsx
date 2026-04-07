@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import logo from "@/assets/logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -37,14 +39,13 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-            <span className="text-sidebar-primary-foreground font-extrabold text-sm">P</span>
-          </div>
+          <img src={logo} alt="Paresha HR" className="w-9 h-9 rounded-lg shrink-0 object-contain" />
           {!collapsed && (
             <div className="overflow-hidden">
               <h2 className="text-sidebar-foreground font-bold text-sm leading-tight truncate">Paresha HR</h2>
@@ -79,18 +80,25 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        {!collapsed && (
+        {!collapsed && user && (
           <div className="flex items-center gap-3 px-2 mb-3">
             <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-              <span className="text-sidebar-foreground text-xs font-semibold">AD</span>
+              <span className="text-sidebar-foreground text-xs font-semibold">
+                {(user.user_metadata?.full_name || user.email || "U").substring(0, 2).toUpperCase()}
+              </span>
             </div>
             <div className="overflow-hidden">
-              <p className="text-sidebar-foreground text-sm font-medium truncate">Admin User</p>
-              <p className="text-sidebar-foreground/50 text-xs truncate">admin@pareshaHR.com</p>
+              <p className="text-sidebar-foreground text-sm font-medium truncate">
+                {user.user_metadata?.full_name || "User"}
+              </p>
+              <p className="text-sidebar-foreground/50 text-xs truncate">{user.email}</p>
             </div>
           </div>
         )}
-        <SidebarMenuButton className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors w-full">
+        <SidebarMenuButton
+          onClick={signOut}
+          className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors w-full"
+        >
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="text-sm">Sign Out</span>}
         </SidebarMenuButton>
