@@ -126,8 +126,8 @@ export const chartData = {
     { month: 'Mar', closures: 7 },
   ],
   recruiterPerformance: [
-    { name: 'Anita Desai', hires: 12, interviews: 28, submissions: 45 },
-    { name: 'Rohan Kumar', hires: 9, interviews: 22, submissions: 38 },
-    { name: 'Meera Joshi', hires: 7, interviews: 18, submissions: 30 },
+    { name: 'Anita Desai', hires: 12, interviews: 28, submissions: 45, target: 15 },
+    { name: 'Rohan Kumar', hires: 9, interviews: 22, submissions: 38, target: 12 },
+    { name: 'Meera Joshi', hires: 7, interviews: 18, submissions: 30, target: 10 },
   ],
 };
