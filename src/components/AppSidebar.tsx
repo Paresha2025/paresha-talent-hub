@@ -2,15 +2,16 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
-  Building2,
   Kanban,
   CalendarCheck,
   FileBarChart,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 import {
   Sidebar,
@@ -29,16 +30,20 @@ const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Candidates", url: "/candidates", icon: Users },
   { title: "Jobs", url: "/jobs", icon: Briefcase },
-  
   { title: "Pipeline", url: "/pipeline", icon: Kanban },
   { title: "Interviews", url: "/interviews", icon: CalendarCheck },
   { title: "Reports", url: "/reports", icon: FileBarChart },
+];
+
+const adminItems = [
+  { title: "Admin Panel", url: "/admin", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { isAdmin } = useUserRole();
   const { user, signOut } = useAuth();
 
   return (
