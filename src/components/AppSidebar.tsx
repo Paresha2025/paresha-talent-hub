@@ -2,15 +2,16 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
-  Building2,
   Kanban,
   CalendarCheck,
   FileBarChart,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import logo from "@/assets/logo.png";
 import {
   Sidebar,
@@ -29,16 +30,20 @@ const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Candidates", url: "/candidates", icon: Users },
   { title: "Jobs", url: "/jobs", icon: Briefcase },
-  
   { title: "Pipeline", url: "/pipeline", icon: Kanban },
   { title: "Interviews", url: "/interviews", icon: CalendarCheck },
   { title: "Reports", url: "/reports", icon: FileBarChart },
+];
+
+const adminItems = [
+  { title: "Admin Panel", url: "/admin", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { isAdmin } = useUserRole();
   const { user, signOut } = useAuth();
 
   return (
@@ -65,6 +70,20 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+                      activeClassName="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                    >
+                      <item.icon className="h-5 w-5 shrink-0" />
+                      {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              {isAdmin && adminItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
                       activeClassName="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                     >
