@@ -9,7 +9,7 @@ import { Layout } from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import Candidates from "@/pages/Candidates";
 import Jobs from "@/pages/Jobs";
-import Clients from "@/pages/Clients";
+
 import Pipeline from "@/pages/Pipeline";
 import Interviews from "@/pages/Interviews";
 import Reports from "@/pages/Reports";
@@ -36,7 +36,7 @@ const App = () => (
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/candidates" element={<Candidates />} />
                       <Route path="/jobs" element={<Jobs />} />
-                      <Route path="/clients" element={<Clients />} />
+                      
                       <Route path="/pipeline" element={<Pipeline />} />
                       <Route path="/interviews" element={<Interviews />} />
                       <Route path="/reports" element={<Reports />} />

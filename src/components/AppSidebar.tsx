@@ -29,7 +29,7 @@ const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Candidates", url: "/candidates", icon: Users },
   { title: "Jobs", url: "/jobs", icon: Briefcase },
-  { title: "Clients", url: "/clients", icon: Building2 },
+  
   { title: "Pipeline", url: "/pipeline", icon: Kanban },
   { title: "Interviews", url: "/interviews", icon: CalendarCheck },
   { title: "Reports", url: "/reports", icon: FileBarChart },
