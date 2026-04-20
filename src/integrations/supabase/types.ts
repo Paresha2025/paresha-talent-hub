@@ -14,6 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          job_id: string
+          notes: string | null
+          stage: Database["public"]["Enums"]["application_stage"]
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          job_id: string
+          notes?: string | null
+          stage?: Database["public"]["Enums"]["application_stage"]
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          job_id?: string
+          notes?: string | null
+          stage?: Database["public"]["Enums"]["application_stage"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current_company: string | null
+          email: string | null
+          experience_years: number
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          resume_url: string | null
+          skills: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current_company?: string | null
+          email?: string | null
+          experience_years?: number
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          resume_url?: string | null
+          skills?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current_company?: string | null
+          email?: string | null
+          experience_years?: number
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          resume_url?: string | null
+          skills?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      interviews: {
+        Row: {
+          application_id: string
+          created_at: string
+          created_by: string | null
+          feedback: string | null
+          id: string
+          notes: string | null
+          scheduled_at: string
+          status: Database["public"]["Enums"]["interview_status"]
+          type: Database["public"]["Enums"]["interview_type"]
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          created_by?: string | null
+          feedback?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_at: string
+          status?: Database["public"]["Enums"]["interview_status"]
+          type?: Database["public"]["Enums"]["interview_type"]
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          created_by?: string | null
+          feedback?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["interview_status"]
+          type?: Database["public"]["Enums"]["interview_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interviews_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          location: string | null
+          recruiter: string | null
+          salary: string | null
+          skills: string[]
+          status: Database["public"]["Enums"]["job_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          recruiter?: string | null
+          salary?: string | null
+          skills?: string[]
+          status?: Database["public"]["Enums"]["job_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          recruiter?: string | null
+          salary?: string | null
+          skills?: string[]
+          status?: Database["public"]["Enums"]["job_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       monthly_targets: {
         Row: {
           created_at: string
@@ -131,6 +316,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "recruiter"
+      application_stage:
+        | "applied"
+        | "screened"
+        | "submitted"
+        | "interview"
+        | "selected"
+        | "rejected"
+      interview_status: "scheduled" | "completed" | "cancelled"
+      interview_type: "phone" | "video" | "in_person"
+      job_status: "open" | "on_hold" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -259,6 +454,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "recruiter"],
+      application_stage: [
+        "applied",
+        "screened",
+        "submitted",
+        "interview",
+        "selected",
+        "rejected",
+      ],
+      interview_status: ["scheduled", "completed", "cancelled"],
+      interview_type: ["phone", "video", "in_person"],
+      job_status: ["open", "on_hold", "closed"],
     },
   },
 } as const
