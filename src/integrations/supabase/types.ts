@@ -107,6 +107,48 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          address: string | null
+          company_name: string
+          contact_person: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          gstin: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_name: string
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interviews: {
         Row: {
           application_id: string
@@ -150,6 +192,65 @@ export type Database = {
             columns: ["application_id"]
             isOneToOne: false
             referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          issue_date: string
+          line_items: Json
+          notes: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_percent: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_percent?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_percent?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -225,6 +326,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      offer_letters: {
+        Row: {
+          application_id: string
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          joining_date: string | null
+          position: string
+          salary: string
+          sent_at: string | null
+          sent_to_email: string | null
+          status: Database["public"]["Enums"]["offer_status"]
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          joining_date?: string | null
+          position: string
+          salary: string
+          sent_at?: string | null
+          sent_to_email?: string | null
+          status?: Database["public"]["Enums"]["offer_status"]
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          joining_date?: string | null
+          position?: string
+          salary?: string
+          sent_at?: string | null
+          sent_to_email?: string | null
+          status?: Database["public"]["Enums"]["offer_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_letters_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -325,7 +479,9 @@ export type Database = {
         | "rejected"
       interview_status: "scheduled" | "completed" | "cancelled"
       interview_type: "phone" | "video" | "in_person"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
       job_status: "open" | "on_hold" | "closed"
+      offer_status: "draft" | "sent" | "accepted" | "rejected" | "withdrawn"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -464,7 +620,9 @@ export const Constants = {
       ],
       interview_status: ["scheduled", "completed", "cancelled"],
       interview_type: ["phone", "video", "in_person"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
       job_status: ["open", "on_hold", "closed"],
+      offer_status: ["draft", "sent", "accepted", "rejected", "withdrawn"],
     },
   },
 } as const
