@@ -259,7 +259,7 @@ function ClientInvoicesDialog({ client, invoices, onClose, onChanged, userId }: 
     if (!client) return;
     if (!invNumber.trim()) { toast({ title: "Invoice number required", variant: "destructive" }); return; }
     setSaving(true);
-    const payload = {
+    const payload: any = {
       client_id: client.id,
       invoice_number: invNumber.trim(),
       issue_date: issueDate,
