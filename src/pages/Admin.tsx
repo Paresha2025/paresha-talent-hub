@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Target, FolderPlus, Trash2, Plus, ShieldCheck, IndianRupee } from "lucide-react";
+import { Target, FolderPlus, Trash2, Plus, ShieldCheck, IndianRupee, Users, Crown, UserMinus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Project {
   id: string;
@@ -27,11 +28,28 @@ interface MonthlyTarget {
   target_amount: number;
 }
 
+interface UserRow {
+  user_id: string;
+  full_name: string | null;
+  roles: string[];
+}
+
+interface RecruiterTarget {
+  id: string;
+  user_id: string;
+  month: string;
+  target_jobs: number;
+  target_revenue: number;
+  full_name?: string | null;
+}
+
 export default function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [projects, setProjects] = useState<Project[]>([]);
   const [targets, setTargets] = useState<MonthlyTarget[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [recTargets, setRecTargets] = useState<RecruiterTarget[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   // Project form
@@ -45,19 +63,111 @@ export default function Admin() {
   const [editingTarget, setEditingTarget] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
 
+  // Recruiter target form
+  const [rtUser, setRtUser] = useState("");
+  const [rtMonth, setRtMonth] = useState("");
+  const [rtJobs, setRtJobs] = useState("");
+  const [rtRevenue, setRtRevenue] = useState("");
+
   useEffect(() => {
     if (isAdmin) fetchData();
   }, [isAdmin]);
 
   async function fetchData() {
     setLoadingData(true);
-    const [projectsRes, targetsRes] = await Promise.all([
+    const [projectsRes, targetsRes, profilesRes, rolesRes, recTargetsRes] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("monthly_targets").select("*").order("month", { ascending: false }),
+      supabase.from("profiles").select("user_id, full_name"),
+      supabase.from("user_roles").select("user_id, role"),
+      supabase.from("recruiter_targets").select("*").order("month", { ascending: false }),
     ]);
     setProjects(projectsRes.data ?? []);
     setTargets(targetsRes.data ?? []);
+
+    const profiles = profilesRes.data ?? [];
+    const roles = rolesRes.data ?? [];
+    setUsers(
+      profiles.map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        roles: roles.filter((r: any) => r.user_id === p.user_id).map((r: any) => r.role),
+      }))
+    );
+
+    const rt = recTargetsRes.data ?? [];
+    setRecTargets(
+      rt.map((r: any) => ({
+        ...r,
+        full_name: profiles.find((p: any) => p.user_id === r.user_id)?.full_name ?? "Unknown",
+      }))
+    );
     setLoadingData(false);
+  }
+
+  async function promoteToAdmin(userId: string) {
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "Promoted to admin" }); fetchData(); }
+  }
+
+  async function revokeAdmin(userId: string) {
+    if (userId === user?.id) {
+      toast({ title: "Cannot revoke your own admin", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("role", "admin");
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "Admin revoked" }); fetchData(); }
+  }
+
+  async function deleteUserAccount(userId: string) {
+    if (userId === user?.id) {
+      toast({ title: "Cannot delete your own account", variant: "destructive" });
+      return;
+    }
+    if (!confirm("Remove this user's roles and profile? Their auth account will remain until deleted from backend Users.")) return;
+    const { error: rolesErr } = await supabase.from("user_roles").delete().eq("user_id", userId);
+    const { error: profErr } = await supabase.from("profiles").delete().eq("user_id", userId);
+    if (rolesErr || profErr) {
+      toast({ title: "Error", description: (rolesErr || profErr)?.message, variant: "destructive" });
+    } else {
+      toast({ title: "User removed" });
+      fetchData();
+    }
+  }
+
+  async function saveRecruiterTarget() {
+    if (!rtUser || !rtMonth) {
+      toast({ title: "Pick a recruiter and month", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("recruiter_targets").upsert(
+      {
+        user_id: rtUser,
+        month: rtMonth + "-01",
+        target_jobs: Number(rtJobs) || 0,
+        target_revenue: Number(rtRevenue) || 0,
+        created_by: user?.id,
+      },
+      { onConflict: "user_id,month" }
+    );
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else {
+      toast({ title: "Recruiter target saved" });
+      setRtUser(""); setRtMonth(""); setRtJobs(""); setRtRevenue("");
+      fetchData();
+    }
+  }
+
+  async function deleteRecruiterTarget(id: string) {
+    const { error } = await supabase.from("recruiter_targets").delete().eq("id", id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "Recruiter target removed" }); fetchData(); }
   }
 
   async function addProject() {
@@ -147,8 +257,180 @@ export default function Admin() {
     <div className="space-y-6 max-w-7xl">
       <div>
         <h1 className="text-2xl font-bold">Admin Panel</h1>
-        <p className="text-muted-foreground text-sm mt-1">Manage targets and projects</p>
+        <p className="text-muted-foreground text-sm mt-1">Manage accounts, roles, targets and projects</p>
       </div>
+
+      {/* User Accounts */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Users className="h-5 w-5 text-accent" /> User Accounts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-card border rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Roles</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => {
+                  const isAdminUser = u.roles.includes("admin");
+                  return (
+                    <TableRow key={u.user_id}>
+                      <TableCell className="text-sm font-medium">
+                        {u.full_name || "Unnamed"}
+                        {u.user_id === user?.id && (
+                          <span className="ml-2 text-xs text-muted-foreground">(you)</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {u.roles.length === 0 && (
+                            <Badge variant="outline" className="text-xs">none</Badge>
+                          )}
+                          {u.roles.map((r) => (
+                            <Badge
+                              key={r}
+                              variant={r === "admin" ? "default" : "secondary"}
+                              className="text-xs capitalize"
+                            >
+                              {r}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end">
+                          {isAdminUser ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs gap-1"
+                              onClick={() => revokeAdmin(u.user_id)}
+                              disabled={u.user_id === user?.id}
+                            >
+                              <UserMinus className="h-3.5 w-3.5" /> Revoke admin
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs gap-1 text-accent"
+                              onClick={() => promoteToAdmin(u.user_id)}
+                            >
+                              <Crown className="h-3.5 w-3.5" /> Promote to admin
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => deleteUserAccount(u.user_id)}
+                            disabled={u.user_id === user?.id}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recruiter Targets */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Target className="h-5 w-5 text-accent" /> Recruiter Targets
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Recruiter</Label>
+              <Select value={rtUser} onValueChange={setRtUser}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((u) => (
+                    <SelectItem key={u.user_id} value={u.user_id}>
+                      {u.full_name || "Unnamed"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Month</Label>
+              <Input type="month" value={rtMonth} onChange={(e) => setRtMonth(e.target.value)} className="h-9 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Target Jobs</Label>
+              <Input type="number" value={rtJobs} onChange={(e) => setRtJobs(e.target.value)} placeholder="5" className="h-9 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Target Revenue (₹)</Label>
+              <Input type="number" value={rtRevenue} onChange={(e) => setRtRevenue(e.target.value)} placeholder="200000" className="h-9 text-sm" />
+            </div>
+            <Button onClick={saveRecruiterTarget} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 h-9">
+              Save Target
+            </Button>
+          </div>
+
+          {recTargets.length > 0 && (
+            <div className="bg-card border rounded-xl overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recruiter</TableHead>
+                    <TableHead>Month</TableHead>
+                    <TableHead>Jobs</TableHead>
+                    <TableHead>Revenue</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recTargets.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-sm font-medium">{r.full_name}</TableCell>
+                      <TableCell className="text-sm">
+                        {new Date(r.month).toLocaleDateString("en-IN", { year: "numeric", month: "long" })}
+                      </TableCell>
+                      <TableCell className="text-sm">{r.target_jobs}</TableCell>
+                      <TableCell className="text-sm">
+                        <div className="inline-flex items-center gap-0.5">
+                          <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
+                          {Number(r.target_revenue).toLocaleString("en-IN")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => deleteRecruiterTarget(r.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Monthly Targets Section */}
       <Card className="border-0 shadow-md">
