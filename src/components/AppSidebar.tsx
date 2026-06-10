@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Building2,
   FileSignature,
+  UsersRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -36,6 +37,7 @@ const navItems = [
   { title: "Pipeline", url: "/pipeline", icon: Kanban },
   { title: "Interviews", url: "/interviews", icon: CalendarCheck },
   { title: "Offer Letters", url: "/offers", icon: FileSignature },
+  { title: "Recruiters", url: "/recruiters", icon: UsersRound },
   { title: "Reports", url: "/reports", icon: FileBarChart },
 ];
 

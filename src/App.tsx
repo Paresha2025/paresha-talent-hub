@@ -15,6 +15,7 @@ import Interviews from "@/pages/Interviews";
 import Reports from "@/pages/Reports";
 import Clients from "@/pages/Clients";
 import OfferLetters from "@/pages/OfferLetters";
+import Recruiters from "@/pages/Recruiters";
 import Auth from "@/pages/Auth";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -44,6 +45,7 @@ const App = () => (
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/clients" element={<Clients />} />
                       <Route path="/offers" element={<OfferLetters />} />
+                      <Route path="/recruiters" element={<Recruiters />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Layout>
