@@ -1,0 +1,14 @@
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.jobs TO authenticated;
+GRANT ALL ON public.jobs TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.candidates TO authenticated;
+GRANT ALL ON public.candidates TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.applications TO authenticated;
+GRANT ALL ON public.applications TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.interviews TO authenticated;
+GRANT ALL ON public.interviews TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.clients TO authenticated;
+GRANT ALL ON public.clients TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.invoices TO authenticated;
+GRANT ALL ON public.invoices TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.offer_letters TO authenticated;
+GRANT ALL ON public.offer_letters TO service_role;
