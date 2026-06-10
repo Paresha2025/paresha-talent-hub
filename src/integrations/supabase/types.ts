@@ -327,6 +327,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_table: string | null
+          id: string
+          message: string | null
+          read_by: string[]
+          title: string
+          type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string | null
+          id?: string
+          message?: string | null
+          read_by?: string[]
+          title: string
+          type: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string | null
+          id?: string
+          message?: string | null
+          read_by?: string[]
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       offer_letters: {
         Row: {
           application_id: string
@@ -434,6 +470,42 @@ export type Database = {
           name?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      recruiter_targets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          month: string
+          notes: string | null
+          target_jobs: number
+          target_revenue: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: string
+          notes?: string | null
+          target_jobs?: number
+          target_revenue?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: string
+          notes?: string | null
+          target_jobs?: number
+          target_revenue?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
