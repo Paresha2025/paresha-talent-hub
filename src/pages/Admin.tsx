@@ -350,6 +350,63 @@ export default function Admin() {
         </CardContent>
       </Card>
 
+      {/* Recruiter Performance */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-accent" /> Recruiter Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-card border rounded-xl overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Recruiter</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">Open</TableHead>
+                  <TableHead className="text-center">On Hold</TableHead>
+                  <TableHead className="text-center">Closed</TableHead>
+                  <TableHead className="text-center">Closed (MTD)</TableHead>
+                  <TableHead className="text-center">Close Rate</TableHead>
+                  <TableHead className="text-right">Revenue (MTD)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recruiterStats.map((s) => (
+                  <TableRow key={s.user_id}>
+                    <TableCell className="text-sm font-medium">
+                      {s.full_name || "Unnamed"}
+                      {s.role === "admin" && <Badge variant="default" className="ml-2 text-[10px]">admin</Badge>}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center gap-1 text-sm font-semibold">
+                        <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />{s.total_jobs}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-sm"><Badge variant="outline">{s.open_jobs}</Badge></TableCell>
+                    <TableCell className="text-center text-sm">
+                      <Badge variant="outline" className="border-accent/40 text-accent">{s.on_hold_jobs}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      <Badge variant="outline" className="border-green-500/40 text-green-600 dark:text-green-400">{s.closed_jobs}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center text-sm font-medium">{s.closed_this_month}</TableCell>
+                    <TableCell className="text-center text-sm">{s.close_rate}%</TableCell>
+                    <TableCell className="text-right text-sm">
+                      <span className="inline-flex items-center"><IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />{s.revenue_this_month.toLocaleString("en-IN")}</span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {recruiterStats.length === 0 && (
+                  <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">No recruiters yet</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Recruiter Targets */}
       <Card className="border-0 shadow-md">
         <CardHeader className="pb-3">
