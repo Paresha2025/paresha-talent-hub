@@ -354,7 +354,7 @@ export default function Admin() {
       <Card className="border-0 shadow-md">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Target className="h-5 w-5 text-accent" /> Recruiter Targets
+            <Target className="h-5 w-5 text-accent" /> Recruiter Targets & Progress
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -398,25 +398,50 @@ export default function Admin() {
                   <TableRow>
                     <TableHead>Recruiter</TableHead>
                     <TableHead>Month</TableHead>
-                    <TableHead>Jobs</TableHead>
-                    <TableHead>Revenue</TableHead>
+                    <TableHead className="min-w-[180px]">Jobs Progress</TableHead>
+                    <TableHead className="min-w-[200px]">Revenue Progress</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recTargets.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-sm font-medium">{r.full_name}</TableCell>
-                      <TableCell className="text-sm">
-                        {new Date(r.month).toLocaleDateString("en-IN", { year: "numeric", month: "long" })}
-                      </TableCell>
-                      <TableCell className="text-sm">{r.target_jobs}</TableCell>
-                      <TableCell className="text-sm">
-                        <div className="inline-flex items-center gap-0.5">
-                          <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
-                          {Number(r.target_revenue).toLocaleString("en-IN")}
-                        </div>
-                      </TableCell>
+                  {recTargets.map((r) => {
+                    const stat = recruiterStats.find((s) => s.user_id === r.user_id);
+                    const tMonth = new Date(r.month);
+                    const now = new Date();
+                    const isCurrent = tMonth.getFullYear() === now.getFullYear() && tMonth.getMonth() === now.getMonth();
+                    const actualJobs = isCurrent ? stat?.closed_this_month ?? 0 : 0;
+                    const actualRev = isCurrent ? stat?.revenue_this_month ?? 0 : 0;
+                    const jobsPct = r.target_jobs ? Math.min(100, Math.round((actualJobs / r.target_jobs) * 100)) : 0;
+                    const revPct = Number(r.target_revenue) ? Math.min(100, Math.round((actualRev / Number(r.target_revenue)) * 100)) : 0;
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-sm font-medium">{r.full_name}</TableCell>
+                        <TableCell className="text-sm">
+                          {tMonth.toLocaleDateString("en-IN", { year: "numeric", month: "long" })}
+                          {isCurrent && <Badge variant="outline" className="ml-2 text-[10px]">current</Badge>}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-xs flex justify-between">
+                              <span className="font-medium">{actualJobs} / {r.target_jobs}</span>
+                              <span className="text-muted-foreground">{jobsPct}%</span>
+                            </div>
+                            <Progress value={jobsPct} className="h-1.5" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-xs flex justify-between gap-2">
+                              <span className="font-medium inline-flex items-center">
+                                <IndianRupee className="h-3 w-3" />{actualRev.toLocaleString("en-IN")}
+                                <span className="text-muted-foreground"> / </span>
+                                <IndianRupee className="h-3 w-3" />{Number(r.target_revenue).toLocaleString("en-IN")}
+                              </span>
+                              <span className="text-muted-foreground">{revPct}%</span>
+                            </div>
+                            <Progress value={revPct} className="h-1.5" />
+                          </div>
+                        </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
@@ -427,8 +452,9 @@ export default function Admin() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
