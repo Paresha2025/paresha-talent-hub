@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Target, FolderPlus, Trash2, Plus, ShieldCheck, IndianRupee, Users, Crown, UserMinus } from "lucide-react";
+import { Briefcase, TrendingUp } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useRecruiterStats } from "@/hooks/useRecruiterStats";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Project {
@@ -46,6 +49,7 @@ interface RecruiterTarget {
 export default function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
+  const { stats: recruiterStats } = useRecruiterStats();
   const [projects, setProjects] = useState<Project[]>([]);
   const [targets, setTargets] = useState<MonthlyTarget[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
