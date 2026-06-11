@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Search, Phone, Mail, Trash2, Pencil, Loader2 } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -203,6 +205,20 @@ export default function Candidates() {
                       <div className="flex gap-1">
                         {c.email && <a href={`mailto:${c.email}`}><Button variant="ghost" size="icon" className="h-8 w-8"><Mail className="h-3.5 w-3.5" /></Button></a>}
                         {c.phone && <a href={`tel:${c.phone}`}><Button variant="ghost" size="icon" className="h-8 w-8"><Phone className="h-3.5 w-3.5" /></Button></a>}
+                        {c.phone && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-green-600 hover:text-green-700"
+                            title="Chat on WhatsApp"
+                            onClick={() => {
+                              const ok = openWhatsApp(c.phone, `Hi ${c.full_name.split(" ")[0]}, this is Paresha HR Services reaching out about an opportunity.`);
+                              if (!ok) toast({ title: "Invalid phone number", variant: "destructive" });
+                            }}
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">

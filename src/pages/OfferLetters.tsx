@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileSignature, Loader2, Mail, Pencil, Plus, Send, Trash2 } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { openWhatsApp } from "@/lib/whatsapp";
 import { toast } from "@/hooks/use-toast";
 
 type OfferStatus = "draft" | "sent" | "accepted" | "rejected" | "withdrawn";
@@ -35,12 +37,13 @@ interface OfferRow {
   created_by: string | null;
   candidate_name?: string;
   candidate_email?: string;
+  candidate_phone?: string | null;
   job_title?: string;
   client_name?: string;
 }
 
 interface AppOption {
-  id: string; label: string; email: string | null; jobTitle: string; clientName: string | null; candidateName: string;
+  id: string; label: string; email: string | null; phone: string | null; jobTitle: string; clientName: string | null; candidateName: string;
 }
 
 function defaultBody(name: string, position: string, client: string, salary: string, joining: string) {
@@ -69,7 +72,7 @@ export default function OfferLetters() {
     setLoading(true);
     const [o, a] = await Promise.all([
       supabase.from("offer_letters").select("*").order("created_at", { ascending: false }),
-      supabase.from("applications").select("id, candidate_id, job_id, candidates(full_name,email), jobs(title,client_name)"),
+      supabase.from("applications").select("id, candidate_id, job_id, candidates(full_name,email,phone), jobs(title,client_name)"),
     ]);
     if (o.error) toast({ title: "Error", description: o.error.message, variant: "destructive" });
     const enriched: OfferRow[] = (o.data ?? []).map((row: any) => {
@@ -78,6 +81,7 @@ export default function OfferLetters() {
         ...row,
         candidate_name: m?.candidates?.full_name,
         candidate_email: m?.candidates?.email,
+        candidate_phone: m?.candidates?.phone,
         job_title: m?.jobs?.title,
         client_name: m?.jobs?.client_name,
       };
@@ -87,6 +91,7 @@ export default function OfferLetters() {
       id: row.id,
       candidateName: row.candidates?.full_name ?? "Unknown",
       email: row.candidates?.email,
+      phone: row.candidates?.phone ?? null,
       jobTitle: row.jobs?.title ?? "Unknown",
       clientName: row.jobs?.client_name,
       label: `${row.candidates?.full_name ?? "?"} → ${row.jobs?.title ?? "?"}`,
@@ -192,6 +197,20 @@ export default function OfferLetters() {
                   <div className="flex gap-2 pt-2 border-t">
                     <Button size="sm" variant="outline" className="flex-1" disabled={!o.candidate_email || sending === o.id} onClick={() => sendEmail(o)}>
                       {sending === o.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Send Email
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-green-700 border-green-200 hover:bg-green-50"
+                      disabled={!o.candidate_phone}
+                      title={o.candidate_phone ? "Send via WhatsApp" : "No phone on file"}
+                      onClick={() => {
+                        const msg = `Hi ${o.candidate_name?.split(" ")[0] ?? ""},\n\nPlease find your offer letter from Paresha HR Services below:\n\n${o.body}`;
+                        const ok = openWhatsApp(o.candidate_phone, msg);
+                        if (!ok) toast({ title: "Invalid phone number", variant: "destructive" });
+                      }}
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                     </Button>
                     {canEdit && (<>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></Button>
