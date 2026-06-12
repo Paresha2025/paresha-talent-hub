@@ -16,6 +16,7 @@ import { Briefcase, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useRecruiterStats } from "@/hooks/useRecruiterStats";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TargetHistory } from "@/components/TargetHistory";
 
 interface Project {
   id: string;
