@@ -28,7 +28,7 @@ export default function Pipeline() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [candidates, setCandidates] = useState<{ id: string; full_name: string }[]>([]);
   const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
-  const [newApp, setNewApp] = useState({ candidate_id: "", job_id: "", stage: "applied" as ApplicationStage });
+  const [newApp, setNewApp] = useState({ candidate_id: "", job_id: "", stage: "applied" as ApplicationStage, position_value: "" });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchAll(); }, []);
@@ -68,13 +68,14 @@ export default function Pipeline() {
       candidate_id: newApp.candidate_id,
       job_id: newApp.job_id,
       stage: newApp.stage,
+      position_value: newApp.position_value ? Number(newApp.position_value) : 0,
       created_by: user?.id,
     });
     setSaving(false);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Application added to pipeline" });
     setDialogOpen(false);
-    setNewApp({ candidate_id: "", job_id: "", stage: "applied" });
+    setNewApp({ candidate_id: "", job_id: "", stage: "applied", position_value: "" });
     fetchAll();
   }
 
@@ -109,6 +110,9 @@ export default function Pipeline() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{APPLICATION_STAGES.map((s) => <SelectItem key={s} value={s}>{stageLabel[s]}</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5"><Label>Position Value (₹)</Label>
+                <Input type="number" min="0" placeholder="50000" value={newApp.position_value} onChange={(e) => setNewApp({ ...newApp, position_value: e.target.value })} />
               </div>
             </div>
             <DialogFooter>
