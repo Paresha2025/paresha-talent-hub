@@ -22,6 +22,7 @@ export type Database = {
           id: string
           job_id: string
           notes: string | null
+          position_value: number
           stage: Database["public"]["Enums"]["application_stage"]
           updated_at: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           job_id: string
           notes?: string | null
+          position_value?: number
           stage?: Database["public"]["Enums"]["application_stage"]
           updated_at?: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           id?: string
           job_id?: string
           notes?: string | null
+          position_value?: number
           stage?: Database["public"]["Enums"]["application_stage"]
           updated_at?: string
         }
