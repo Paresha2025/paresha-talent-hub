@@ -520,6 +520,9 @@ export default function Admin() {
         </CardContent>
       </Card>
 
+      {/* Target History */}
+      <TargetHistory />
+
       {/* Monthly Targets Section */}
       <Card className="border-0 shadow-md">
         <CardHeader className="pb-3">

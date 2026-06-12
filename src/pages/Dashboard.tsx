@@ -39,6 +39,18 @@ export default function Dashboard() {
 
   useEffect(() => { loadDashboard(); }, []);
 
+  // Realtime: refresh dashboard counters when jobs or applications change so the
+  // monthly target bar auto-updates when a recruiter closes a job/hire.
+  useEffect(() => {
+    const channel = supabase
+      .channel("dashboard-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "applications" }, () => loadDashboard())
+      .on("postgres_changes", { event: "*", schema: "public", table: "jobs" }, () => loadDashboard())
+      .on("postgres_changes", { event: "*", schema: "public", table: "monthly_targets" }, () => loadDashboard())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   async function loadDashboard() {
     setLoading(true);
     const now = new Date();
