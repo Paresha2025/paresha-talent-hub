@@ -1,0 +1,1 @@
+ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS position_value numeric NOT NULL DEFAULT 0;
