@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
 import { APPLICATION_STAGES, stageLabel } from "@/lib/atsConstants";
 
-const CLOSED_POSITION_VALUE = 50000;
 const COLORS = ['hsl(var(--info))', 'hsl(var(--warning))', 'hsl(var(--accent))', 'hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -32,7 +31,7 @@ function formatCurrency(amount: number) {
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState({ activeJobs: 0, candidates: 0, scheduledInterviews: 0, selected: 0, hiredMtd: 0 });
+  const [counts, setCounts] = useState({ activeJobs: 0, candidates: 0, scheduledInterviews: 0, selected: 0, hiredMtd: 0, achievedMtd: 0 });
   const [stagesData, setStagesData] = useState<{ stage: string; count: number }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ month: string; closures: number }[]>([]);
   const [monthlyTarget, setMonthlyTarget] = useState(0);
@@ -63,17 +62,20 @@ export default function Dashboard() {
       supabase.from("candidates").select("id", { count: "exact", head: true }),
       supabase.from("interviews").select("id", { count: "exact", head: true }).eq("status", "scheduled"),
       supabase.from("applications").select("stage"),
-      supabase.from("applications").select("id", { count: "exact", head: true }).eq("stage", "selected").gte("updated_at", monthStart),
+      supabase.from("applications").select("id, position_value").eq("stage", "selected").gte("updated_at", monthStart),
       supabase.from("applications").select("stage, updated_at").eq("stage", "selected").gte("updated_at", sixMonthsAgo.toISOString()),
       supabase.from("monthly_targets").select("target_amount").eq("month", monthStr).maybeSingle(),
     ]);
 
+    const hiredRows = (hiredMtdRes.data ?? []) as any[];
+    const achievedMtd = hiredRows.reduce((s, r) => s + Number(r.position_value || 0), 0);
     setCounts({
       activeJobs: jobsRes.count ?? 0,
       candidates: candRes.count ?? 0,
       scheduledInterviews: intRes.count ?? 0,
       selected: (appsRes.data ?? []).filter((a) => a.stage === "selected").length,
-      hiredMtd: hiredMtdRes.count ?? 0,
+      hiredMtd: hiredRows.length,
+      achievedMtd,
     });
 
     // Stage breakdown
@@ -110,7 +112,7 @@ export default function Dashboard() {
     { label: "Hired (MTD)", value: counts.hiredMtd, icon: TrendingUp, gradient: "from-primary/20 to-primary/5", iconBg: "bg-primary/15", iconColor: "text-primary", border: "border-primary/20" },
   ], [counts]);
 
-  const achieved = counts.hiredMtd * CLOSED_POSITION_VALUE;
+  const achieved = counts.achievedMtd;
   const remaining = Math.max(0, monthlyTarget - achieved);
   const progress = monthlyTarget > 0 ? Math.min(100, (achieved / monthlyTarget) * 100) : 0;
 
@@ -144,7 +146,7 @@ export default function Dashboard() {
                 <span>Remaining: <span className="font-semibold text-warning">{formatCurrency(remaining)}</span></span>
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">
-                {counts.hiredMtd} hire{counts.hiredMtd !== 1 ? "s" : ""} × {formatCurrency(CLOSED_POSITION_VALUE)}/hire
+                {counts.hiredMtd} hire{counts.hiredMtd !== 1 ? "s" : ""} · sum of position values
               </p>
             </>
           )}
