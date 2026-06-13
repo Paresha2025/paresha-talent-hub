@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Plus } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +19,7 @@ interface AppRow {
   stage: ApplicationStage;
   candidate_id: string;
   job_id: string;
+  position_value?: number | null;
   candidates: { full_name: string; experience_years: number; skills: string[] } | null;
   jobs: { title: string; client_name: string | null } | null;
 }
@@ -31,13 +34,16 @@ export default function Pipeline() {
   const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
   const [newApp, setNewApp] = useState({ candidate_id: "", job_id: "", stage: "applied" as ApplicationStage, position_value: "" });
   const [saving, setSaving] = useState(false);
+  const [editApp, setEditApp] = useState<AppRow | null>(null);
+  const [editForm, setEditForm] = useState({ candidate_id: "", job_id: "", stage: "applied" as ApplicationStage, position_value: "" });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => { fetchAll(); }, []);
 
   async function fetchAll() {
     setLoading(true);
     const [appsRes, candRes, jobsRes] = await Promise.all([
-      supabase.from("applications").select("id, stage, candidate_id, job_id, candidates(full_name, experience_years, skills), jobs(title, client_name)").order("created_at", { ascending: false }),
+      supabase.from("applications").select("id, stage, candidate_id, job_id, position_value, candidates(full_name, experience_years, skills), jobs(title, client_name)").order("created_at", { ascending: false }),
       supabase.from("candidates").select("id, full_name").order("full_name"),
       supabase.from("jobs").select("id, title").order("title"),
     ]);
@@ -77,6 +83,41 @@ export default function Pipeline() {
     toast({ title: "Application added to pipeline" });
     setDialogOpen(false);
     setNewApp({ candidate_id: "", job_id: "", stage: "applied", position_value: "" });
+    fetchAll();
+  }
+
+  function openEdit(a: AppRow) {
+    setEditApp(a);
+    setEditForm({
+      candidate_id: a.candidate_id,
+      job_id: a.job_id,
+      stage: a.stage,
+      position_value: a.position_value != null ? String(a.position_value) : "",
+    });
+  }
+
+  async function saveEdit() {
+    if (!editApp) return;
+    setSaving(true);
+    const { error } = await supabase.from("applications").update({
+      candidate_id: editForm.candidate_id,
+      job_id: editForm.job_id,
+      stage: editForm.stage,
+      position_value: editForm.position_value ? Number(editForm.position_value) : 0,
+    }).eq("id", editApp.id);
+    setSaving(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Application updated" });
+    setEditApp(null);
+    fetchAll();
+  }
+
+  async function confirmDelete() {
+    if (!deleteId) return;
+    const { error } = await supabase.from("applications").delete().eq("id", deleteId);
+    setDeleteId(null);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Application removed" });
     fetchAll();
   }
 
@@ -143,7 +184,13 @@ export default function Pipeline() {
                 <div className="space-y-3">
                   {stageApps.map((a) => (
                     <div key={a.id} draggable onDragStart={() => setDraggedId(a.id)} className="kanban-card cursor-grab active:cursor-grabbing">
-                      <p className="font-medium text-sm mb-1">{a.candidates?.full_name ?? "Unknown"}</p>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="font-medium text-sm">{a.candidates?.full_name ?? "Unknown"}</p>
+                        <div className="flex gap-1 opacity-70 hover:opacity-100">
+                          <button onClick={(e) => { e.stopPropagation(); openEdit(a); }} className="p-1 rounded hover:bg-accent/20" title="Edit"><Pencil className="h-3 w-3" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteId(a.id); }} className="p-1 rounded hover:bg-destructive/20 text-destructive" title="Delete"><Trash2 className="h-3 w-3" /></button>
+                        </div>
+                      </div>
                       <p className="text-xs text-muted-foreground mb-2 truncate">{a.jobs?.title ?? "—"}{a.jobs?.client_name ? ` · ${a.jobs.client_name}` : ""}</p>
                       <div className="flex items-center justify-between">
                         <div className="flex gap-1">
@@ -159,6 +206,54 @@ export default function Pipeline() {
           })}
         </div>
       )}
+
+      <Dialog open={!!editApp} onOpenChange={(o) => !o && setEditApp(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Application</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="space-y-1.5"><Label>Candidate</Label>
+              <Select value={editForm.candidate_id} onValueChange={(v) => setEditForm({ ...editForm, candidate_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Pick a candidate" /></SelectTrigger>
+                <SelectContent>{candidates.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5"><Label>Job</Label>
+              <Select value={editForm.job_id} onValueChange={(v) => setEditForm({ ...editForm, job_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Pick a job" /></SelectTrigger>
+                <SelectContent>{jobs.map((j) => <SelectItem key={j.id} value={j.id}>{j.title}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5"><Label>Stage</Label>
+              <Select value={editForm.stage} onValueChange={(v) => setEditForm({ ...editForm, stage: v as ApplicationStage })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{APPLICATION_STAGES.map((s) => <SelectItem key={s} value={s}>{stageLabel[s]}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5"><Label>Position Value (₹)</Label>
+              <Input type="number" min="0" placeholder="50000" value={editForm.position_value} onChange={(e) => setEditForm({ ...editForm, position_value: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditApp(null)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={saving} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from pipeline?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete the application. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
