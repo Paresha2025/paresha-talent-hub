@@ -542,6 +542,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_notification_read: { Args: { _id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "recruiter"
