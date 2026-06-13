@@ -72,10 +72,7 @@ export function NotificationBell() {
     if (!user) return;
     const unreadItems = items.filter((n) => !n.read_by?.includes(user.id));
     for (const n of unreadItems) {
-      await supabase
-        .from("notifications")
-        .update({ read_by: [...(n.read_by ?? []), user.id] })
-        .eq("id", n.id);
+      await supabase.rpc("mark_notification_read", { _id: n.id });
     }
   }
 
