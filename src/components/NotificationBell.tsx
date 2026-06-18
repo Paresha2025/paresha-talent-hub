@@ -19,11 +19,13 @@ interface Notification {
   entity_table: string | null;
   created_at: string;
   read_by: string[];
+  actor_id: string | null;
 }
 
 export function NotificationBell() {
   const { user } = useAuth();
   const [items, setItems] = useState<Notification[]>([]);
+  const [actors, setActors] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
 
   const unread = user
@@ -67,6 +69,26 @@ export function NotificationBell() {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // Resolve actor names for any unknown actor_ids in the current items list.
+  useEffect(() => {
+    const ids = Array.from(
+      new Set(items.map((n) => n.actor_id).filter((id): id is string => !!id && !actors[id]))
+    );
+    if (ids.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", ids);
+      if (!data) return;
+      setActors((prev) => {
+        const next = { ...prev };
+        data.forEach((p: any) => { next[p.user_id] = p.full_name ?? "Someone"; });
+        return next;
+      });
+    })();
+  }, [items, actors]);
 
   async function markAllRead() {
     if (!user) return;
@@ -122,6 +144,9 @@ export function NotificationBell() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{n.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          by {n.actor_id ? (actors[n.actor_id] ?? "…") : "System"}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {formatDistanceToNow(new Date(n.created_at), {
                             addSuffix: true,
