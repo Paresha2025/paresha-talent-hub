@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Target, FolderPlus, Trash2, Plus, ShieldCheck, IndianRupee, Users, Crown, UserMinus } from "lucide-react";
+import { Target, FolderPlus, Trash2, Plus, ShieldCheck, IndianRupee, Users, Crown, UserMinus, UserPlus } from "lucide-react";
 import { Briefcase, TrendingUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useRecruiterStats } from "@/hooks/useRecruiterStats";
@@ -128,6 +128,22 @@ export default function Admin() {
       .eq("role", "admin");
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else { toast({ title: "Admin revoked" }); fetchData(); }
+  }
+
+  async function promoteToRecruiter(userId: string) {
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "recruiter" });
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "Promoted to recruiter" }); fetchData(); }
+  }
+
+  async function revokeRecruiter(userId: string) {
+    const { error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("role", "recruiter");
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "Recruiter role revoked" }); fetchData(); }
   }
 
   async function deleteUserAccount(userId: string) {
@@ -285,6 +301,7 @@ export default function Admin() {
               <TableBody>
                 {users.map((u) => {
                   const isAdminUser = u.roles.includes("admin");
+                  const isRecruiterUser = u.roles.includes("recruiter");
                   return (
                     <TableRow key={u.user_id}>
                       <TableCell className="text-sm font-medium">
@@ -329,6 +346,25 @@ export default function Admin() {
                               onClick={() => promoteToAdmin(u.user_id)}
                             >
                               <Crown className="h-3.5 w-3.5" /> Promote to admin
+                            </Button>
+                          )}
+                          {isRecruiterUser ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs gap-1"
+                              onClick={() => revokeRecruiter(u.user_id)}
+                            >
+                              <UserMinus className="h-3.5 w-3.5" /> Revoke recruiter
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs gap-1 text-accent"
+                              onClick={() => promoteToRecruiter(u.user_id)}
+                            >
+                              <UserPlus className="h-3.5 w-3.5" /> Promote to recruiter
                             </Button>
                           )}
                           <Button
