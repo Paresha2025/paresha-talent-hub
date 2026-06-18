@@ -31,7 +31,7 @@ interface CandidateLite {
   id: string;
   full_name: string;
   email: string | null;
-  current_role: string | null;
+  current_company: string | null;
 }
 
 interface SharedCandidate {
@@ -39,7 +39,7 @@ interface SharedCandidate {
   candidate_id: string;
   full_name: string;
   email: string | null;
-  current_role: string | null;
+  current_company: string | null;
   stage: string;
 }
 
@@ -130,9 +130,9 @@ export default function Jobs() {
     const [appsRes, candsRes] = await Promise.all([
       supabase
         .from("applications")
-        .select("id, stage, candidate:candidates(id, full_name, email, current_role)")
+        .select("id, stage, candidate:candidates(id, full_name, email, current_company)")
         .eq("job_id", job.id),
-      supabase.from("candidates").select("id, full_name, email, current_role").order("full_name"),
+      supabase.from("candidates").select("id, full_name, email, current_company").order("full_name"),
     ]);
     if (appsRes.error) toast({ title: "Error", description: appsRes.error.message, variant: "destructive" });
     const rows: SharedCandidate[] = (appsRes.data ?? [])
@@ -142,7 +142,7 @@ export default function Jobs() {
         candidate_id: a.candidate.id,
         full_name: a.candidate.full_name,
         email: a.candidate.email,
-        current_role: a.candidate.current_role,
+        current_company: a.candidate.current_company,
         stage: a.stage,
       }));
     setShared(rows);
@@ -282,7 +282,7 @@ export default function Jobs() {
                       .filter((c) => !shared.some((s) => s.candidate_id === c.id))
                       .map((c) => (
                         <SelectItem key={c.id} value={c.id}>
-                          {c.full_name}{c.current_role ? ` — ${c.current_role}` : ""}
+                          {c.full_name}{c.current_company ? ` — ${c.current_company}` : ""}
                         </SelectItem>
                       ))}
                     {allCandidates.filter((c) => !shared.some((s) => s.candidate_id === c.id)).length === 0 && (
@@ -313,7 +313,7 @@ export default function Jobs() {
                       <div className="min-w-0">
                         <div className="font-medium truncate">{s.full_name}</div>
                         <div className="text-xs text-muted-foreground truncate">
-                          {s.current_role ?? "—"}{s.email ? ` · ${s.email}` : ""}
+                          {s.current_company ?? "—"}{s.email ? ` · ${s.email}` : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
