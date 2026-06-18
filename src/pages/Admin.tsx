@@ -301,6 +301,7 @@ export default function Admin() {
               <TableBody>
                 {users.map((u) => {
                   const isAdminUser = u.roles.includes("admin");
+                  const isRecruiterUser = u.roles.includes("recruiter");
                   return (
                     <TableRow key={u.user_id}>
                       <TableCell className="text-sm font-medium">
@@ -345,6 +346,25 @@ export default function Admin() {
                               onClick={() => promoteToAdmin(u.user_id)}
                             >
                               <Crown className="h-3.5 w-3.5" /> Promote to admin
+                            </Button>
+                          )}
+                          {isRecruiterUser ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs gap-1"
+                              onClick={() => revokeRecruiter(u.user_id)}
+                            >
+                              <UserMinus className="h-3.5 w-3.5" /> Revoke recruiter
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs gap-1 text-accent"
+                              onClick={() => promoteToRecruiter(u.user_id)}
+                            >
+                              <UserPlus className="h-3.5 w-3.5" /> Promote to recruiter
                             </Button>
                           )}
                           <Button
