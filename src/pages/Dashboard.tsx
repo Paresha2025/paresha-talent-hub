@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
 import { APPLICATION_STAGES, stageLabel } from "@/lib/atsConstants";
+import { useRecruiterStats } from "@/hooks/useRecruiterStats";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const COLORS = ['hsl(var(--info))', 'hsl(var(--warning))', 'hsl(var(--accent))', 'hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
 
@@ -31,6 +34,7 @@ function formatCurrency(amount: number) {
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
+  const { stats: recruiterStats, loading: recruiterLoading } = useRecruiterStats();
   const [counts, setCounts] = useState({ activeJobs: 0, candidates: 0, scheduledInterviews: 0, selected: 0, hiredMtd: 0, achievedMtd: 0 });
   const [stagesData, setStagesData] = useState<{ stage: string; count: number }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ month: string; closures: number }[]>([]);
@@ -164,6 +168,56 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      <Card className="overflow-hidden border-0 shadow-md">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-base font-semibold">Recruiter Performance</CardTitle>
+          <span className="text-xs text-muted-foreground">{recruiterStats.length} member{recruiterStats.length !== 1 ? "s" : ""}</span>
+        </CardHeader>
+        <CardContent className="p-0">
+          {recruiterLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : recruiterStats.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No recruiters yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recruiter</TableHead>
+                    <TableHead className="text-right">Total Jobs</TableHead>
+                    <TableHead className="text-right">Open</TableHead>
+                    <TableHead className="text-right">Closed</TableHead>
+                    <TableHead className="text-right">Closed (MTD)</TableHead>
+                    <TableHead className="text-right">Revenue (MTD)</TableHead>
+                    <TableHead className="text-right">Close Rate</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recruiterStats.map((r) => (
+                    <TableRow key={r.user_id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{r.full_name ?? "Unnamed"}</span>
+                          <Badge variant="outline" className="text-[10px] capitalize">{r.role}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">{r.total_jobs}</TableCell>
+                      <TableCell className="text-right text-sm">{r.open_jobs}</TableCell>
+                      <TableCell className="text-right text-sm">{r.closed_jobs}</TableCell>
+                      <TableCell className="text-right text-sm">{r.closed_this_month}</TableCell>
+                      <TableCell className="text-right text-sm">{formatCurrency(r.revenue_this_month)}</TableCell>
+                      <TableCell className="text-right text-sm">
+                        <span className={r.close_rate >= 50 ? "text-success font-semibold" : "text-muted-foreground"}>{r.close_rate}%</span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="overflow-hidden border-0 shadow-md">
