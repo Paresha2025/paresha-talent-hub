@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Input } from "@/components/ui/input";
 import { Search, Phone, Mail, Trash2, Pencil, Loader2 } from "lucide-react";
 import { MessageCircle } from "lucide-react";
@@ -25,12 +26,31 @@ interface CandidateRow {
   skills: string[];
   notes: string | null;
   created_by: string | null;
+  location: string | null;
+  salary: string | null;
+  notice_period: string | null;
+  client_designation: string | null;
+  call_status: string | null;
 }
 
-const empty = { full_name: "", email: "", phone: "", current_company: "", experience_years: "0", skills: "", notes: "" };
+const empty = {
+  full_name: "", email: "", phone: "", current_company: "", experience_years: "0", skills: "", notes: "",
+  location: "", salary: "", notice_period: "", client_designation: "", call_status: "",
+};
+
+const CALL_STATUSES: { value: string; label: string }[] = [
+  { value: "rnr", label: "RNR" },
+  { value: "call_done", label: "Call Done" },
+  { value: "follow_up", label: "Follow Up" },
+  { value: "screened", label: "Screened" },
+  { value: "not_suitable", label: "Not Suitable" },
+  { value: "not_interested", label: "Not Interested" },
+];
+const callStatusLabel = (v: string | null) => CALL_STATUSES.find((s) => s.value === v)?.label ?? "—";
 
 export default function Candidates() {
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -74,6 +94,8 @@ export default function Candidates() {
       full_name: c.full_name, email: c.email ?? "", phone: c.phone ?? "",
       current_company: c.current_company ?? "", experience_years: String(c.experience_years),
       skills: c.skills.join(", "), notes: c.notes ?? "",
+      location: c.location ?? "", salary: c.salary ?? "", notice_period: c.notice_period ?? "",
+      client_designation: c.client_designation ?? "", call_status: c.call_status ?? "",
     });
     setDialogOpen(true);
   }
@@ -89,6 +111,11 @@ export default function Candidates() {
       experience_years: Number(form.experience_years) || 0,
       skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
       notes: form.notes.trim() || null,
+      location: form.location.trim() || null,
+      salary: form.salary.trim() || null,
+      notice_period: form.notice_period.trim() || null,
+      client_designation: form.client_designation.trim() || null,
+      call_status: (form.call_status || null) as any,
     };
     const { error } = editingId
       ? await supabase.from("candidates").update(payload).eq("id", editingId)
@@ -128,6 +155,20 @@ export default function Candidates() {
                 <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
                 <div className="space-y-1.5"><Label>Current Company</Label><Input value={form.current_company} onChange={(e) => setForm({ ...form, current_company: e.target.value })} /></div>
                 <div className="space-y-1.5"><Label>Experience (yrs)</Label><Input type="number" min="0" value={form.experience_years} onChange={(e) => setForm({ ...form, experience_years: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Location</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Current Salary</Label><Input value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Notice Period</Label><Input value={form.notice_period} onChange={(e) => setForm({ ...form, notice_period: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Client Designation</Label><Input value={form.client_designation} onChange={(e) => setForm({ ...form, client_designation: e.target.value })} /></div>
+                <div className="space-y-1.5">
+                  <Label>Call Status</Label>
+                  <Select value={form.call_status || "none"} onValueChange={(v) => setForm({ ...form, call_status: v === "none" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">—</SelectItem>
+                      {CALL_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-1.5"><Label>Skills (comma separated)</Label><Input value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} /></div>
               <div className="space-y-1.5"><Label>Notes</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
@@ -179,19 +220,22 @@ export default function Candidates() {
                 <TableHead>Name</TableHead>
                 <TableHead>Experience</TableHead>
                 <TableHead>Skills</TableHead>
+                <TableHead>Call Status</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c) => {
-                const canEdit = c.created_by === user?.id;
+                const canEdit = c.created_by === user?.id || isAdmin;
                 return (
                   <TableRow key={c.id}>
                     <TableCell>
                       <div>
                         <p className="font-medium text-sm">{c.full_name}</p>
-                        <p className="text-muted-foreground text-xs">{c.current_company ?? "—"}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {c.current_company ?? "—"}{c.location ? ` · ${c.location}` : ""}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{c.experience_years} yrs</TableCell>
@@ -200,6 +244,9 @@ export default function Candidates() {
                         {c.skills.slice(0, 2).map((s) => <Badge key={s} variant="secondary" className="text-xs font-normal">{s}</Badge>)}
                         {c.skills.length > 2 && <Badge variant="secondary" className="text-xs font-normal">+{c.skills.length - 2}</Badge>}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs font-normal">{callStatusLabel(c.call_status)}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
