@@ -67,6 +67,8 @@ export type Database = {
       }
       candidates: {
         Row: {
+          call_status: Database["public"]["Enums"]["call_status"] | null
+          client_designation: string | null
           created_at: string
           created_by: string | null
           current_company: string | null
@@ -74,13 +76,18 @@ export type Database = {
           experience_years: number
           full_name: string
           id: string
+          location: string | null
           notes: string | null
+          notice_period: string | null
           phone: string | null
           resume_url: string | null
+          salary: string | null
           skills: string[]
           updated_at: string
         }
         Insert: {
+          call_status?: Database["public"]["Enums"]["call_status"] | null
+          client_designation?: string | null
           created_at?: string
           created_by?: string | null
           current_company?: string | null
@@ -88,13 +95,18 @@ export type Database = {
           experience_years?: number
           full_name: string
           id?: string
+          location?: string | null
           notes?: string | null
+          notice_period?: string | null
           phone?: string | null
           resume_url?: string | null
+          salary?: string | null
           skills?: string[]
           updated_at?: string
         }
         Update: {
+          call_status?: Database["public"]["Enums"]["call_status"] | null
+          client_designation?: string | null
           created_at?: string
           created_by?: string | null
           current_company?: string | null
@@ -102,9 +114,12 @@ export type Database = {
           experience_years?: number
           full_name?: string
           id?: string
+          location?: string | null
           notes?: string | null
+          notice_period?: string | null
           phone?: string | null
           resume_url?: string | null
+          salary?: string | null
           skills?: string[]
           updated_at?: string
         }
@@ -553,6 +568,13 @@ export type Database = {
         | "interview"
         | "selected"
         | "rejected"
+      call_status:
+        | "rnr"
+        | "call_done"
+        | "follow_up"
+        | "screened"
+        | "not_suitable"
+        | "not_interested"
       interview_status: "scheduled" | "completed" | "cancelled"
       interview_type: "phone" | "video" | "in_person"
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
@@ -693,6 +715,14 @@ export const Constants = {
         "interview",
         "selected",
         "rejected",
+      ],
+      call_status: [
+        "rnr",
+        "call_done",
+        "follow_up",
+        "screened",
+        "not_suitable",
+        "not_interested",
       ],
       interview_status: ["scheduled", "completed", "cancelled"],
       interview_type: ["phone", "video", "in_person"],
